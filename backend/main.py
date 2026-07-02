@@ -15,6 +15,9 @@ from pydantic import BaseModel
 
 from analyzer import analyze_creatives, generate_strategy, generate_copy_variants
 from landing import analyze_landing_page
+from predictor import train as train_predictor, predict as predict_cvr
+from clustering import cluster_creatives
+from rag_agent import agentic_recommendations
 
 app = FastAPI(title="AdPulse", version="1.0.0",
               description="Agentic ad-creative & landing-page analyzer (local LLM).")
@@ -50,12 +53,43 @@ async def analyze_csv(file: UploadFile = File(...)):
     if len(df) == 0:
         raise HTTPException(400, "CSV is empty.")
 
+    # Layer 1: heuristic bucketing + LLM action plan
     analysis = analyze_creatives(df)
     try:
         strategy = generate_strategy(analysis)
     except Exception as e:  # noqa: BLE001
         strategy = {"error": f"LLM strategy generation failed: {e}"}
-    return {"analysis": analysis, "strategy": strategy}
+
+    # Layer 2: XGBoost predictive model (train on this account's data, predict CVR uplift)
+    ml = {}
+    try:
+        ml["training"] = train_predictor(df)
+        ml["predictions"] = predict_cvr(df)
+    except Exception as e:  # noqa: BLE001
+        ml = {"error": f"Predictive model failed: {e}"}
+
+    # Layer 3: creative clustering (embedding + k-means + LLM theme labels)
+    clusters = {}
+    try:
+        clusters = cluster_creatives(df)
+    except Exception as e:  # noqa: BLE001
+        clusters = {"error": f"Clustering failed: {e}"}
+
+    # Layer 4: agentic RAG (problem identification → evidence retrieval → grounded recs)
+    rag = {}
+    try:
+        cluster_summary = clusters.get("clusters") if isinstance(clusters, dict) else None
+        rag = agentic_recommendations(df, cluster_summary)
+    except Exception as e:  # noqa: BLE001
+        rag = {"error": f"Agentic RAG failed: {e}"}
+
+    return {
+        "analysis": analysis,
+        "strategy": strategy,
+        "ml": ml,
+        "clusters": clusters,
+        "rag": rag,
+    }
 
 
 @app.post("/analyze/copy")

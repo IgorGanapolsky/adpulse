@@ -18,6 +18,28 @@ interface Strategy {
   summary?: string;
   error?: string;
 }
+interface MLPred {
+  name: string; actual_cvr: number; predicted_cvr: number; uplift_potential: number; signal: string;
+}
+interface MLResult {
+  training?: { r2_real: number; r2_augmented: number; rows_real: number; rows_augmented: number; top_drivers: { feature: string; importance: number }[] };
+  predictions?: MLPred[];
+  error?: string;
+}
+interface Cluster {
+  cluster_id: number; theme: string; verdict: string; rank: number; size: number;
+  total_spend: number; total_conversions: number; avg_cvr: number; sample_copy: string[];
+}
+interface ClusterResult { k?: number; clusters?: Cluster[]; error?: string }
+interface RAGRec {
+  problem_addressed?: string; recommendation?: string; cited_card_id?: number;
+  confidence?: number; reasoning?: string; evidence_cards?: number[]; error?: string;
+}
+interface RAGResult {
+  problems_found?: number; recommendations?: RAGRec[];
+  reasoning_trace?: { step: number; action: string }[];
+  error?: string;
+}
 
 const BUCKET_STYLES: Record<string, string> = {
   winner: "border-emerald-600 bg-emerald-950/30",
@@ -30,7 +52,7 @@ const BUCKET_LABEL: Record<string, string> = {
 
 export default function CsvAnalyzer() {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ analysis: { rows: AnalysisRow[]; totals: Totals }; strategy: Strategy } | null>(null);
+  const [result, setResult] = useState<{ analysis: { rows: AnalysisRow[]; totals: Totals }; strategy: Strategy; ml: MLResult; clusters: ClusterResult; rag: RAGResult } | null>(null);
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -162,6 +184,106 @@ export default function CsvAnalyzer() {
               ))}
             </div>
           </div>
+
+          {/* Layer 2: ML predictions */}
+          {result.ml?.training && (
+            <div className="rounded-xl border border-indigo-800/50 bg-indigo-950/20 p-5">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-indigo-300">🧠 XGBoost CVR Predictor</h3>
+                <span className="rounded-lg bg-indigo-900/50 px-3 py-1 text-xs text-indigo-300">
+                  R² = {result.ml.training.r2_real} · trained on {result.ml.training.rows_real} real + {result.ml.training.rows_augmented} augmented rows
+                </span>
+              </div>
+              <div className="mt-3">
+                <span className="text-xs uppercase text-zinc-500">Top conversion-rate drivers:</span>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {result.ml.training.top_drivers.slice(0, 5).map((d, i) => (
+                    <span key={i} className="rounded-lg border border-indigo-900/50 bg-indigo-950/40 px-3 py-1 text-sm text-indigo-200">
+                      {d.feature} <b className="text-indigo-400">{(d.importance * 100).toFixed(0)}%</b>
+                    </span>
+                  ))}
+                </div>
+              </div>
+              {result.ml.predictions && result.ml.predictions.filter(p => p.signal !== "on-model").length > 0 && (
+                <div className="mt-4">
+                  <span className="text-xs uppercase text-zinc-500">Creatives with uplift potential (underperforming vs modeled CVR):</span>
+                  {result.ml.predictions.filter(p => p.signal !== "on-model").map((p, i) => (
+                    <div key={i} className="mt-1 rounded-lg border border-zinc-800 bg-zinc-950/50 p-3 text-sm">
+                      <span className="font-medium">{p.name}</span>
+                      <span className={`ml-2 ${p.signal === "underperforming" ? "text-amber-400" : "text-emerald-400"}`}>
+                        actual { (p.actual_cvr * 100).toFixed(1) }% vs predicted { (p.predicted_cvr * 100).toFixed(1) }%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Layer 3: Clustering */}
+          {result.clusters?.clusters && result.clusters.clusters.length > 0 && (
+            <div className="rounded-xl border border-purple-800/50 bg-purple-950/20 p-5">
+              <h3 className="mb-3 font-semibold text-purple-300">
+                🎯 Creative Theme Clusters (k={result.clusters.k})
+              </h3>
+              <div className="space-y-2">
+                {result.clusters.clusters.map((c, i) => (
+                  <div key={i} className={`rounded-lg border p-4 ${c.verdict === "goldmine" ? "border-emerald-700/50 bg-emerald-950/20" : "border-red-800/40 bg-red-950/10"}`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <span className="font-medium text-purple-200">[{c.theme}]</span>
+                        <span className={`ml-2 text-xs ${c.verdict === "goldmine" ? "text-emerald-400" : "text-red-400"}`}>
+                          {c.verdict === "goldmine" ? "★ GOLDMINE" : "▼ UNDERPERFORMING"} · rank {c.rank}
+                        </span>
+                      </div>
+                      <span className="text-xs text-zinc-500">{c.size} creatives</span>
+                    </div>
+                    <div className="mt-1 text-sm text-zinc-400">
+                      Spend ${c.total_spend.toLocaleString()} · {c.total_conversions} conv · avg CVR {(c.avg_cvr * 100).toFixed(2)}%
+                    </div>
+                    {c.sample_copy?.[0] && <div className="mt-1 truncate text-xs text-zinc-600">"{c.sample_copy[0]}"</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Layer 4: Agentic RAG */}
+          {result.rag?.recommendations && result.rag.recommendations.length > 0 && (
+            <div className="rounded-xl border border-cyan-800/50 bg-cyan-950/20 p-5">
+              <h3 className="mb-1 font-semibold text-cyan-300">🔍 Agentic RAG — Evidence-Grounded Recommendations</h3>
+              {result.rag.reasoning_trace && (
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {result.rag.reasoning_trace.map((s, i) => (
+                    <span key={i} className="rounded bg-cyan-900/30 px-2 py-0.5 text-xs text-cyan-400">
+                      {s.step}. {s.action}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="space-y-2">
+                {result.rag.recommendations.map((r, i) => (
+                  <div key={i} className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-sm text-zinc-300">{r.recommendation}</span>
+                      <span className="shrink-0 rounded bg-cyan-900/40 px-2 py-0.5 text-xs text-cyan-400">
+                        conf {((r.confidence ?? 0) * 100).toFixed(0)}%
+                      </span>
+                    </div>
+                    <div className="mt-1 text-xs text-zinc-500">
+                      <span className="text-cyan-500">cites Card {r.cited_card_id}</span> · {r.problem_addressed}
+                    </div>
+                    {r.reasoning && (
+                      <details className="mt-1">
+                        <summary className="cursor-pointer text-xs text-zinc-600 hover:text-zinc-400">reasoning trace</summary>
+                        <p className="mt-1 text-xs text-zinc-500">{r.reasoning}</p>
+                      </details>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>
