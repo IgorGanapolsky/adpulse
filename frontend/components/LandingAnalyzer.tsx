@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "/api/index";
+const API = process.env.NEXT_PUBLIC_API_URL || "/api";
 
 interface Recs {
   score?: number;

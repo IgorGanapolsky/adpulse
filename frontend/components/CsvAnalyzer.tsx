@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "/api/index";
+const API = process.env.NEXT_PUBLIC_API_URL || "/api";
 
 interface AnalysisRow {
   name: string; copy: string; spend: number; impressions: number;
