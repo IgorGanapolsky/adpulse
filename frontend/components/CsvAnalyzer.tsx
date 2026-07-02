@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API = process.env.NEXT_PUBLIC_API_URL || "";
 
 interface AnalysisRow {
   name: string; copy: string; spend: number; impressions: number;
@@ -61,7 +61,7 @@ export default function CsvAnalyzer() {
     const fd = new FormData();
     fd.append("file", file);
     try {
-      const r = await fetch(`${API}/analyze/csv`, { method: "POST", body: fd });
+      const r = await fetch(`${API}/api/analyze`, { method: "POST", body: fd });
       if (!r.ok) {
         const e = await r.json().catch(() => ({}));
         throw new Error(e.detail || `Server error ${r.status}`);

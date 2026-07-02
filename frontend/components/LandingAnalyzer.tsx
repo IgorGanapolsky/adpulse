@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API = process.env.NEXT_PUBLIC_API_URL || "";
 
 interface Recs {
   score?: number;
@@ -23,7 +23,7 @@ export default function LandingAnalyzer() {
     if (!url.trim()) return;
     setLoading(true); setError(""); setData(null);
     try {
-      const r = await fetch(`${API}/analyze/landing`, {
+      const r = await fetch(`${API}/api/landing`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
       });
