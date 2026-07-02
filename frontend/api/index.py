@@ -1,20 +1,16 @@
-"""Vercel Serverless Function — AdPulse API.
+"""Vercel Python serverless function for AdPulse API.
 
-Routes (via single FastAPI app mounted at /api):
-  GET  /api              → health check
-  POST /api/analyze      → CSV analysis (multipart upload)
-  POST /api/copy         → ad copy variants
-  POST /api/landing      → landing page analysis
+Uses Vercel's native Python function format with FastAPI ASGI app.
+All API routes are handled by this single FastAPI app via Vercel's
+`entrypoint` configuration in pyproject.toml.
 """
 from __future__ import annotations
 import io
 import sys
 import os
 
-# Ensure local imports work — modules are in ../lib/ relative to api/
-_lib_path = os.path.join(os.path.dirname(__file__), "..", "lib")
-sys.path.insert(0, _lib_path)
-sys.path.insert(0, os.path.dirname(__file__))
+# Ensure lib imports work
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
 
 import pandas as pd
 from fastapi import FastAPI, File, UploadFile, HTTPException
@@ -35,8 +31,10 @@ app.add_middleware(
 
 
 @app.get("/")
+@app.get("/api")
+@app.get("/api/")
 def health():
-    return {"status": "ok", "service": "AdPulse"}
+    return {"status": "ok", "service": "AdPulse", "layers": ["heuristic", "xgboost", "clustering", "rag"]}
 
 
 class CopyRequest(BaseModel):
@@ -49,6 +47,7 @@ class LandingRequest(BaseModel):
 
 
 @app.post("/analyze")
+@app.post("/api/analyze")
 async def analyze(file: UploadFile = File(...)):
     if not file.filename.endswith(".csv"):
         raise HTTPException(400, "Please upload a .csv file.")
@@ -60,12 +59,14 @@ async def analyze(file: UploadFile = File(...)):
     if len(df) == 0:
         raise HTTPException(400, "CSV is empty.")
 
+    # Layer 1: heuristic bucketing + LLM action plan
     analysis = analyze_creatives(df)
     try:
         strategy = generate_strategy(analysis)
     except Exception as e:
         strategy = {"error": f"LLM strategy generation failed: {e}"}
 
+    # Layer 2: XGBoost predictive model
     ml = {}
     try:
         ml["training"] = train_predictor(df)
@@ -73,12 +74,14 @@ async def analyze(file: UploadFile = File(...)):
     except Exception as e:
         ml = {"error": f"Predictive model failed: {e}"}
 
+    # Layer 3: creative clustering
     clusters = {}
     try:
         clusters = cluster_creatives(df)
     except Exception as e:
         clusters = {"error": f"Clustering failed: {e}"}
 
+    # Layer 4: agentic RAG
     rag = {}
     try:
         cluster_summary = clusters.get("clusters") if isinstance(clusters, dict) else None
@@ -90,6 +93,7 @@ async def analyze(file: UploadFile = File(...)):
 
 
 @app.post("/copy")
+@app.post("/api/copy")
 def copy(req: CopyRequest):
     try:
         return generate_copy_variants(req.winner_copy, req.brand)
@@ -98,6 +102,7 @@ def copy(req: CopyRequest):
 
 
 @app.post("/landing")
+@app.post("/api/landing")
 def landing(req: LandingRequest):
     try:
         return analyze_landing_page(req.url)
