@@ -33,6 +33,9 @@ app.add_middleware(
 @app.get("/")
 @app.get("/api")
 @app.get("/api/")
+@app.get("/api/index")
+@app.get("/api/index/")
+@app.get("/health")
 def health():
     return {"status": "ok", "service": "AdPulse", "layers": ["heuristic", "xgboost", "clustering", "rag"]}
 
@@ -48,6 +51,7 @@ class LandingRequest(BaseModel):
 
 @app.post("/analyze")
 @app.post("/api/analyze")
+@app.post("/api/index/analyze")
 async def analyze(file: UploadFile = File(...)):
     if not file.filename.endswith(".csv"):
         raise HTTPException(400, "Please upload a .csv file.")
@@ -103,6 +107,7 @@ def copy(req: CopyRequest):
 
 @app.post("/landing")
 @app.post("/api/landing")
+@app.post("/api/index/landing")
 def landing(req: LandingRequest):
     try:
         return analyze_landing_page(req.url)
