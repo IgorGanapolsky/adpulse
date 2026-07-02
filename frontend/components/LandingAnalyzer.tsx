@@ -56,7 +56,7 @@ export default function LandingAnalyzer() {
             {loading ? "Analyzing…" : "Analyze"}
           </button>
         </div>
-        <p className="mt-2 text-xs text-zinc-600">We fetch the page, extract the copy, and the local LLM scores it + suggests rewrites.</p>
+        <p className="mt-2 text-xs text-zinc-600">We fetch the page, extract the copy, and the AI scores it + suggests rewrites.</p>
         {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
       </form>
 

@@ -1,10 +1,10 @@
 """Vercel Serverless Function — AdPulse API.
 
-Routes:
-  /api/health            → GET health check
-  /api/analyze           → POST CSV analysis (multipart upload)
-  /api/analyze/copy      → POST ad copy variants
-  /api/analyze/landing   → POST landing page analysis
+Routes (via single FastAPI app mounted at /api):
+  GET  /api              → health check
+  POST /api/analyze      → CSV analysis (multipart upload)
+  POST /api/copy         → ad copy variants
+  POST /api/landing      → landing page analysis
 """
 from __future__ import annotations
 import io

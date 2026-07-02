@@ -12,7 +12,12 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from sklearn.cluster import KMeans
+
+try:
+    from sklearn.cluster import KMeans
+    HAS_SKLEARN = True
+except ImportError:
+    HAS_SKLEARN = False
 
 from llm import chat_json, OPENROUTER_API_KEY
 
@@ -54,6 +59,8 @@ def cluster_creatives(df: pd.DataFrame) -> dict[str, Any]:
     Returns cluster themes with aggregate performance so the user sees which
     creative *themes* work, not just which individual ads work.
     """
+    if not HAS_SKLEARN:
+        return {"status": "skipped", "reason": "Clustering requires scikit-learn (not available in serverless). Available in local mode."}
     copies = df["Ad Copy"].fillna("").astype(str).tolist()
     if not any(c.strip() for c in copies):
         return {"error": "No ad copy found to cluster."}

@@ -20,7 +20,7 @@ export default function Home() {
             </div>
             <h1 className="text-2xl font-bold tracking-tight">AdPulse</h1>
             <span className="ml-2 rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400">
-              local-LLM · no data leaves your machine
+              AI-powered · 4-layer ML + RAG analysis
             </span>
           </div>
           <p className="mt-3 max-w-2xl text-zinc-400">
@@ -49,7 +49,7 @@ export default function Home() {
       </div>
 
       <footer className="border-t border-zinc-800 py-6 text-center text-xs text-zinc-600">
-        AdPulse — Built for the It&apos;s Today Media Build Challenge · Powered by local LLMs (Ollama)
+        AdPulse — Built for the It&apos;s Today Media Build Challenge · Powered by 4-layer ML (heuristic + XGBoost + clustering + agentic RAG)
       </footer>
     </main>
   );
