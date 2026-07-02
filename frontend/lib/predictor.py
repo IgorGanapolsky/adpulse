@@ -1,11 +1,6 @@
 """Predictive model: estimates a creative's conversion rate from its features.
 
-Engineers numeric/text features from raw ad copy + spend metrics, then trains an
-XGBoost regressor. The model predicts expected conversion rate for any creative —
-useful for budget allocation ("which cold creatives deserve a test budget?") and
-for flagging winners whose actual CVR is underperforming their predicted potential.
-
-Persists to disk so inference is instant after the first train.
+Uses XGBoost if available, falls back to sklearn GradientBoostingRegressor.
 """
 from __future__ import annotations
 import os
@@ -20,11 +15,14 @@ import pandas as pd
 
 try:
     from xgboost import XGBRegressor
-    from sklearn.feature_extraction.text import TfidfVectorizer
-    from sklearn.preprocessing import StandardScaler
-    HAS_ML = True
+    HAS_XGBOOST = True
 except ImportError:
-    HAS_ML = False
+    from sklearn.ensemble import GradientBoostingRegressor
+    XGBRegressor = None
+    HAS_XGBOOST = False
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.preprocessing import StandardScaler
 
 MODEL_DIR = os.environ.get("ADPULSE_MODEL_DIR", os.path.join(os.path.dirname(__file__), "..", "model_artifacts"))
 MODEL_PATH = os.path.join(MODEL_DIR, "cvr_predictor.pkl")
@@ -109,7 +107,7 @@ def _synthetic_augment(df: pd.DataFrame, n: int = 400) -> pd.DataFrame:
 
 def train(df: pd.DataFrame) -> dict[str, Any]:
     """Train the CVR predictor. Returns metrics + persists artifacts."""
-    if not HAS_ML:
+    if not HAS_XGBOOST:
         return {"status": "skipped", "reason": "XGBoost not available in serverless. Pre-trained model loaded from artifacts."}
     os.makedirs(MODEL_DIR, exist_ok=True)
     work = _synthetic_augment(df, n=max(0, 600 - len(df))) if len(df) < 50 else df.copy()
@@ -155,7 +153,7 @@ def train(df: pd.DataFrame) -> dict[str, Any]:
 
 def predict(df: pd.DataFrame) -> list[dict[str, Any]]:
     """Predict expected CVR for each creative. Loads persisted model."""
-    if not HAS_ML:
+    if not HAS_XGBOOST:
         # Return heuristic predictions without the ML model
         out = []
         for _, row in df.iterrows():

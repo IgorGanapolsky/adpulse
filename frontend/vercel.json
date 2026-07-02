@@ -1,8 +1,10 @@
 {
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 120
+    }
+  },
   "rewrites": [
-    { "source": "/api/health", "destination": "/api/index" },
-    { "source": "/api/analyze", "destination": "/api/index/analyze" },
-    { "source": "/api/copy", "destination": "/api/index/copy" },
-    { "source": "/api/landing", "destination": "/api/index/landing" }
+    { "source": "/api/:path*", "destination": "/api/index/:path*" }
   ]
 }
