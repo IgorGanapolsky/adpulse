@@ -11,8 +11,10 @@ import io
 import sys
 import os
 
-# Ensure local imports work in Vercel's Python runtime
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "lib"))
+# Ensure local imports work — modules are in ../lib/ relative to api/
+_lib_path = os.path.join(os.path.dirname(__file__), "..", "lib")
+sys.path.insert(0, _lib_path)
+sys.path.insert(0, os.path.dirname(__file__))
 
 import pandas as pd
 from fastapi import FastAPI, File, UploadFile, HTTPException
