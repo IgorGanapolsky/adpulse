@@ -1,10 +1,8 @@
 # AdPulse
 
-**Agentic ad-creative & landing-page analyzer for performance/affiliate media buyers.**
+**Every affiliate media buyer is burning 15–30% of their spend on creatives that will never convert. No existing tool tells them which ones — or why.**
 
-AdPulse ingests an ad-account export (CSV from Meta/Google/Taboola/TikTok) or a landing-page URL, then runs a **four-layer analysis pipeline** — heuristic bucketing, an XGBoost predictive model, embedding-based creative clustering, and an agentic RAG layer that cites a best-practices corpus — to tell you exactly which creatives to kill, which to scale, and how to rewrite the ones in between.
-
-**Runs entirely on local LLMs (Ollama)** — no ad-account data leaves your machine, which is a hard adoption requirement for teams handling real spend and conversion data.
+AdPulse does. Upload an ad-account export (Meta/Google/Taboola/TikTok CSV) or paste a landing-page URL. AdPulse runs a four-layer analysis pipeline that tells you exactly which creatives to kill, which to scale, and how to rewrite the ones in between — with every recommendation grounded in cited evidence, not a black-box guess.
 
 ---
 
@@ -12,7 +10,38 @@ AdPulse ingests an ad-account export (CSV from Meta/Google/Taboola/TikTok) or a 
 
 - **App:** https://frontend-tau-wheat-20.vercel.app
 - **Repo:** https://github.com/IgorGanapolsky/adpulse
-- **Backend:** local FastAPI + Ollama (qwen2.5-coder:14b + nomic-embed-text), exposed via Cloudflare tunnel
+
+---
+
+## Contest answers
+
+### What does this tool do?
+
+AdPulse ingests ad-account data (CSV export or landing-page URL) and runs a four-layer pipeline:
+
+1. **Heuristic bucketing** — classifies each creative as winner / break-even / waste using account-relative CPC/CTR/CPA thresholds, then generates a dollar-specific kill/scale action plan.
+2. **XGBoost prediction** — engineers 12 copy-derived features + TF-IDF vectors, trains a regressor to predict each creative's conversion rate, and flags creatives underperforming their modeled potential (uplift signal: the copy is strong but something is suppressing conversions).
+3. **Creative clustering** — embeds every ad with `nomic-embed-text`, runs k-means with auto-k, and surfaces thematic patterns that raw CPA sorting misses.
+4. **Agentic RAG** — identifies problems in the data, retrieves cited evidence from a best-practices corpus (Ogilvy, Hopkins, Cialdini, performance-marketing benchmarks), and generates recommendations with multi-step reasoning traces.
+
+Runs entirely on **local LLMs (Ollama)** — no ad-account data leaves the machine, which clears the data-privacy bar that blocks most cloud AI tools from real ad accounts.
+
+### Why did you build THIS one?
+
+Because performance-marketing teams already have dashboards that show *what happened*. They lack tooling that tells them *what to do next* and *why*. The competitive landscape proves the gap:
+
+- **AdCreative.ai** ($39–$999/mo) generates new ads but doesn't diagnose existing ones.
+- **Triple Whale / Northbeam** (~$1,290/mo) show which *channel* converts, not which *creative* or why.
+- **Motion** ($29–$79/seat) visualizes creative performance but doesn't predict or prescribe.
+
+AdPulse is the only tool that does creative-level ML diagnosis with explainable, evidence-grounded recommendations. The four-layer stack is genuinely AI-native: an LLM doesn't just narrate numbers, it clusters themes, predicts uplift, and grounds every prescription in retrievable best-practice evidence.
+
+### What would you build next?
+
+1. **Live ad-platform API ingestion** (Meta Marketing API, Google Ads API) — replace CSV upload with automated daily pulls so the analysis runs every morning before the media buyer opens their laptop.
+2. **One-click kill/scale execution** — turn the action plan into direct budget changes against the live ad accounts, closing the loop from diagnosis to optimization.
+3. **A/B variant generation** — for creatives flagged as high-potential-but-underperforming (XGBoost uplift signal), auto-generate replacement copy variants and launch them as tests.
+4. **Team-specific RAG corpus** — expand the best-practices knowledge base with the team's own historical creative-performance data so recommendations are grounded in *their* past winners.
 
 ---
 
@@ -42,19 +71,6 @@ A multi-step agent loop:
 3. **Generate grounded recommendations** — each recommendation cites a specific card ID, includes a confidence score, and carries a multi-step reasoning trace.
 
 Each recommendation is transparent: you see the problem, the retrieved evidence, the recommendation, and the reasoning — not a black-box suggestion.
-
----
-
-## Why this one (contest answer)
-
-Performance-marketing teams already have dashboards that show *what* happened. They lack tooling that tells them *what to do next* and *why*. AdPulse closes that gap with a stack that's genuinely AI-native: an LLM doesn't just narrate numbers, it clusters creative themes, predicts uplift, and grounds every recommendation in retrievable evidence. And because it runs on local models, it clears the data-privacy bar that blocks most cloud AI tools from real ad accounts.
-
-## What's next
-
-1. **Live ad-platform API ingestion** (Meta Marketing API, Google Ads API) to replace CSV upload with automated daily pulls.
-2. **Automated budget reallocation** — turn the kill/scale plan into one-click execution against the live ad accounts.
-3. **A/B variant generation** — generate copy variants for underperforming-but-high-potential creatives (flagged by the XGBoost uplift signal) and auto-launch them as tests.
-4. **Larger RAG corpus** — expand the best-practices knowledge base with the team's own historical creative-performance data so recommendations are grounded in *their* past winners, not just general best practices.
 
 ---
 
