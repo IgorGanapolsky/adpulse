@@ -76,6 +76,8 @@ Each recommendation is transparent: you see the problem, the retrieved evidence,
 
 ## Architecture
 
+![Architecture Diagram](https://frontend-tau-wheat-20.vercel.app/api/manifest.json?arch=1)
+
 ```
 Frontend + API (Next.js, Vercel)
   ├── app/api/analyze/route.ts   (Layer 1: heuristic + Layer 2: predictions + Layer 4: LLM strategy + RAG)
@@ -110,5 +112,13 @@ uvicorn main:app --port 8001
 cd ../frontend
 NEXT_PUBLIC_API_URL=http://localhost:8001 npm run dev
 ```
+
+## Pricing
+
+| Plan | Price | Best For |
+|------|-------|----------|
+| One-time diagnostic | $499 | Single ad-account audit with full 4-layer report |
+| Pro monthly | $299/mo | Daily monitoring + weekly optimization reports |
+| Agency | $799/mo | Multi-account management, white-label reports |
 
 Built for the It's Today Media Marketing Development Engineer Build Challenge.
