@@ -15,6 +15,14 @@ from rag_agent import agentic_recommendations
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
+
+# Debug: catch all paths to see what Vercel sends
+@app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def catch_all(path: str):
+    from fastapi import Request
+    return {"received_path": path, "method": "unknown"}
+
+
 @app.post("/")
 @app.post("/analyze")
 @app.post("/api/analyze")
