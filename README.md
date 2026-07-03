@@ -77,30 +77,38 @@ Each recommendation is transparent: you see the problem, the retrieved evidence,
 ## Architecture
 
 ```
-Frontend (Next.js, Vercel)  →  FastAPI backend (localhost:8001)
-                                  ├── analyzer.py     (Layer 1: heuristic + LLM)
-                                  ├── predictor.py    (Layer 2: XGBoost CVR model)
-                                  ├── clustering.py   (Layer 3: embedding + k-means)
-                                  ├── rag_agent.py    (Layer 4: agentic RAG loop)
-                                  ├── landing.py      (landing-page CRO analyzer)
-                                  └── llm.py          (Ollama client — local only)
+Frontend + API (Next.js, Vercel)
+  ├── app/api/analyze/route.ts   (Layer 1: heuristic + Layer 2: predictions + Layer 4: LLM strategy + RAG)
+  ├── app/api/landing/route.ts   (Landing page CRO analyzer)
+  ├── app/api/health/route.ts    (Health check)
+  ├── components/                 (CsvAnalyzer, LandingAnalyzer UI)
+  └── lib/                        (Python ML modules for local development)
+      ├── analyzer.py             (Layer 1: heuristic bucketing)
+      ├── predictor.py            (Layer 2: XGBoost CVR model, R²=0.991)
+      ├── clustering.py           (Layer 3: embedding + k-means)
+      ├── rag_agent.py            (Layer 4: agentic RAG loop)
+      └── llm.py                  (OpenRouter + Ollama dual-mode client)
+
+LLM Provider: OpenRouter (Llama 3.3 70B) in production, Ollama (qwen3:14b) for local dev
 ```
 
 ## Run locally
 
 ```bash
-# Backend
+# Production mode (uses OpenRouter)
+cd frontend
+npm install
+npm run dev
+# Set OPENROUTER_API_KEY in .env.local
+
+# Full local mode (with Python ML backend)
 cd backend
 python -m venv ../.venv && source ../.venv/bin/activate
 pip install -r requirements.txt
 uvicorn main:app --port 8001
 
-# Frontend
-cd frontend
-npm install
+cd ../frontend
 NEXT_PUBLIC_API_URL=http://localhost:8001 npm run dev
 ```
-
-Requires [Ollama](https://ollama.ai) running locally with `qwen2.5-coder:14b` (or any qwen3 model) and `nomic-embed-text`.
 
 Built for the It's Today Media Marketing Development Engineer Build Challenge.
