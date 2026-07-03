@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import DiagnosticCTA from "./DiagnosticCTA";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -101,6 +102,9 @@ export default function LandingAnalyzer() {
               </div>
             </Card>
           )}
+
+          {/* Diagnostic upsell CTA */}
+          <DiagnosticCTA />
 
           {/* Top 3 fixes */}
           {data.recommendations.top_3_fixes && data.recommendations.top_3_fixes.length > 0 && (

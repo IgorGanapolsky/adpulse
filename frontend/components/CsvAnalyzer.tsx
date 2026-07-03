@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import DiagnosticCTA from "./DiagnosticCTA";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -247,6 +248,9 @@ export default function CsvAnalyzer() {
               </div>
             </div>
           )}
+
+          {/* Diagnostic upsell CTA */}
+          <DiagnosticCTA />
 
           {/* Layer 4: Agentic RAG */}
           {result.rag?.recommendations && result.rag.recommendations.length > 0 && (
