@@ -24,7 +24,7 @@ AdPulse ingests ad-account data (CSV export or landing-page URL) and runs a four
 3. **Creative clustering** — embeds every ad with `nomic-embed-text`, runs k-means with auto-k, and surfaces thematic patterns that raw CPA sorting misses.
 4. **Agentic RAG** — identifies problems in the data, retrieves cited evidence from a best-practices corpus (Ogilvy, Hopkins, Cialdini, performance-marketing benchmarks), and generates recommendations with multi-step reasoning traces.
 
-Runs entirely on **local LLMs (Ollama)** — no ad-account data leaves the machine, which clears the data-privacy bar that blocks most cloud AI tools from real ad accounts.
+Runs on **OpenRouter** (Llama 3.3 70B) in production with **Ollama** support for local development — no ad-account data is stored or persisted. The analysis runs in stateless serverless functions that process the upload and return results without retention.
 
 ### Why did you build THIS one?
 
