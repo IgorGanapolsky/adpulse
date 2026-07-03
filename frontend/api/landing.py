@@ -16,6 +16,7 @@ class LandingRequest(BaseModel):
 
 @app.post("/")
 @app.post("/landing")
+@app.post("/api/landing")
 def landing(req: LandingRequest):
     try:
         return analyze_landing_page(req.url)

@@ -17,6 +17,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 
 @app.post("/")
 @app.post("/analyze")
+@app.post("/api/analyze")
 async def analyze(file: UploadFile = File(...)):
     if not file.filename or not file.filename.endswith(".csv"):
         raise HTTPException(400, "Please upload a .csv file.")
